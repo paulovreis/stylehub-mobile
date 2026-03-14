@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/app_failure.dart';
+import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/app_error_view.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../push/presentation/push_controller.dart';
@@ -64,6 +65,7 @@ class _NotificationsTabState extends ConsumerState<NotificationsTab> {
               else
                 SliverList.separated(
                   itemCount: data.items.length + (data.isLoadingMore ? 1 : 0),
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
                   itemBuilder: (context, index) {
                     if (index >= data.items.length) {
                       return const Padding(
@@ -79,7 +81,6 @@ class _NotificationsTabState extends ConsumerState<NotificationsTab> {
                     final n = data.items[index];
                     return _NotificationTile(notification: n);
                   },
-                  separatorBuilder: (_, __) => const Divider(height: 1),
                 ),
             ],
           ),
@@ -115,6 +116,7 @@ class _NotificationTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final id = notification.id;
     final isRead = (notification.readAt?.trim().isNotEmpty ?? false);
@@ -126,29 +128,81 @@ class _NotificationTile extends ConsumerWidget {
     final body = notification.body?.trim();
     final subtitle = body == null || body.isEmpty ? null : body;
 
-    return ListTile(
-      title: Text(
-        title,
-        style: isRead
-            ? null
-            : const TextStyle(fontWeight: FontWeight.w600),
+    final createdAt = AppFormatters.formatDateFlexible(notification.createdAt);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+      child: Card(
+        color: theme.colorScheme.surfaceContainerLowest,
+        child: InkWell(
+          onTap: (id == null || isRead)
+              ? null
+              : () async {
+                  try {
+                    await ref.read(notificationsControllerProvider.notifier).markRead(id);
+                    await ref.read(notificationsControllerProvider.notifier).refresh();
+                  } catch (e) {
+                    final msg = _messageForError(e);
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(msg)),
+                    );
+                  }
+                },
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: isRead
+                            ? theme.textTheme.titleSmall
+                            : theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    if (!isRead)
+                      Container(
+                        margin: const EdgeInsets.only(top: 4),
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                  ],
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    subtitle,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+                if (createdAt.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    createdAt,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
       ),
-      subtitle: subtitle == null ? null : Text(subtitle),
-      trailing: isRead ? null : const Icon(Icons.circle, size: 10),
-      onTap: (id == null || isRead)
-          ? null
-          : () async {
-              try {
-                await ref.read(notificationsControllerProvider.notifier).markRead(id);
-                await ref.read(notificationsControllerProvider.notifier).refresh();
-              } catch (e) {
-                final msg = _messageForError(e);
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(msg)),
-                );
-              }
-            },
     );
   }
 }

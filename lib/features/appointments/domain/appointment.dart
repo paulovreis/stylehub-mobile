@@ -3,6 +3,14 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'appointment.freezed.dart';
 part 'appointment.g.dart';
 
+enum AppointmentStatus {
+  scheduled,
+  confirmed,
+  completed,
+  canceled,
+  unknown,
+}
+
 @freezed
 class Appointment with _$Appointment {
   const factory Appointment({
@@ -39,7 +47,34 @@ class Appointment with _$Appointment {
     map['serviceName'] ??= _serviceNameFrom(map);
     map['employeeName'] ??= _employeeNameFrom(map);
 
+    // Normaliza status (scheduled/confirmed/completed/canceled).
+    final status = _normalizeStatus(_firstPresent(map, const [
+      'status',
+      'state',
+      'appointment_status',
+    ]));
+    map['status'] = status;
+
     return Appointment.fromJson(map);
+  }
+}
+
+extension AppointmentX on Appointment {
+  AppointmentStatus get statusEnum => _statusEnumFrom(status);
+
+  bool get isUpcoming {
+    final s = statusEnum;
+    return s == AppointmentStatus.scheduled || s == AppointmentStatus.confirmed;
+  }
+
+  bool get isHistory {
+    final s = statusEnum;
+    return s == AppointmentStatus.completed || s == AppointmentStatus.canceled;
+  }
+
+  bool get canCancel {
+    // Requisito: cancelar só quando "scheduled".
+    return statusEnum == AppointmentStatus.scheduled;
   }
 }
 
@@ -80,4 +115,35 @@ int? _toIntOrNull(Object? value) {
   if (value is num) return value.toInt();
   if (value is String) return int.tryParse(value.trim());
   return null;
+}
+
+String? _normalizeStatus(Object? value) {
+  if (value == null) return null;
+  final v = value.toString().trim().toLowerCase();
+  if (v.isEmpty) return null;
+
+  // Aceita variações comuns.
+  if (v == 'cancelled') return 'canceled';
+  if (v == 'canceled' || v == 'scheduled' || v == 'confirmed' || v == 'completed') {
+    return v;
+  }
+
+  return v;
+}
+
+AppointmentStatus _statusEnumFrom(String? raw) {
+  final v = (raw ?? '').trim().toLowerCase();
+  switch (v) {
+    case 'scheduled':
+      return AppointmentStatus.scheduled;
+    case 'confirmed':
+      return AppointmentStatus.confirmed;
+    case 'completed':
+      return AppointmentStatus.completed;
+    case 'canceled':
+    case 'cancelled':
+      return AppointmentStatus.canceled;
+    default:
+      return AppointmentStatus.unknown;
+  }
 }

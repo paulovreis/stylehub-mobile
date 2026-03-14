@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/utils/formatters.dart';
 import '../../../core/network/app_failure.dart';
 import '../../../core/widgets/app_error_view.dart';
 import '../../dashboard/domain/dashboard_summary.dart';
@@ -179,14 +180,16 @@ class _NextAppointmentCard extends StatelessWidget {
 }
 
 String _formatNextAppointment(DashboardNextAppointment next) {
-  final date = next.appointmentDate;
-  final time = next.appointmentTime;
+  final dateRaw = next.appointmentDate;
+  final timeRaw = next.appointmentTime;
   final service = next.serviceName;
   final employee = next.employeeName;
 
   final parts = <String>[];
-  if (date != null && date.trim().isNotEmpty) parts.add(date.trim());
-  if (time != null && time.trim().isNotEmpty) parts.add(time.trim());
+  final date = AppFormatters.formatDateFlexible(dateRaw);
+  final time = AppFormatters.formatTimeFlexible(timeRaw);
+  if (date.isNotEmpty) parts.add(date);
+  if (time.isNotEmpty) parts.add(time);
 
   final title = parts.isEmpty ? 'Agendamento confirmado' : parts.join(' • ');
 

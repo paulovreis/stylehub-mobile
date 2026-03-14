@@ -10,6 +10,9 @@ ThemeData buildAppTheme(Brightness brightness) {
     useMaterial3: true,
     colorScheme: scheme,
     inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: scheme.surfaceContainerHighest,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
     ),
     cardTheme: CardTheme(

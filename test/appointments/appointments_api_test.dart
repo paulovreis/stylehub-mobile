@@ -1,4 +1,4 @@
-import 'package:beauty_salon_client/features/appointments/data/appointments_api.dart';
+import 'package:stylehub_mobile/features/appointments/data/appointments_api.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http_mock_adapter/http_mock_adapter.dart';

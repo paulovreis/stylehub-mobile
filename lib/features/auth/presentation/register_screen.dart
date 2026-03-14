@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/app_primary_button.dart';
 import 'auth_controller.dart';
 
@@ -55,6 +56,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               controller: _phone,
               keyboardType: TextInputType.phone,
               textInputAction: TextInputAction.next,
+              inputFormatters: const [BrPhoneTextInputFormatter()],
               decoration: const InputDecoration(labelText: 'Telefone (opcional)'),
             ),
             const SizedBox(height: 12),
@@ -75,7 +77,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           .register(
                             name: _name.text,
                             email: _email.text,
-                            phone: _phone.text,
+                            phone: AppFormatters.onlyDigits(_phone.text),
                             password: _password.text,
                           );
                       if (!context.mounted) return;

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/app_failure.dart';
+import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/app_error_view.dart';
 import '../../../l10n/app_localizations.dart';
 import '../domain/appointment.dart';
@@ -63,9 +64,9 @@ class _AppointmentsList extends ConsumerWidget {
           onRefresh: () =>
               ref.read(appointmentsControllerProvider(scope).notifier).refresh(),
           child: ListView.separated(
-            padding: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.only(bottom: 16, top: 8),
             itemCount: data.items.length + (data.isLoadingMore ? 1 : 0),
-            separatorBuilder: (_, __) => const Divider(height: 1),
+            separatorBuilder: (_, __) => const SizedBox(height: 10),
             itemBuilder: (context, index) {
               if (index >= data.items.length) {
                 return const Padding(
@@ -105,6 +106,7 @@ class _AppointmentTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
     final title = (appointment.serviceName?.trim().isNotEmpty ?? false)
         ? appointment.serviceName!.trim()
         : 'Serviço';
@@ -112,33 +114,117 @@ class _AppointmentTile extends ConsumerWidget {
     final subtitle = _subtitleFor(appointment);
 
     final id = appointment.id;
-    final cancelEnabled = canCancel && id != null;
+    final cancelEnabled = canCancel && id != null && appointment.canCancel;
+    final statusChip = _statusChip(context, appointment.statusEnum);
 
-    return ListTile(
-      title: Text(title),
-      subtitle: subtitle == null ? null : Text(subtitle),
-      trailing: cancelEnabled
-          ? TextButton(
-              onPressed: () => _confirmCancel(context, ref, appointmentId: id),
-              child: const Text('Cancelar'),
-            )
-          : null,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      child: Card(
+        color: theme.colorScheme.surfaceContainerLowest,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            title,
+                            style: theme.textTheme.titleMedium,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        statusChip,
+                      ],
+                    ),
+                    if (subtitle != null) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        subtitle,
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              if (cancelEnabled) ...[
+                const SizedBox(width: 12),
+                TextButton(
+                  onPressed: () => _confirmCancel(context, ref, appointmentId: id),
+                  child: const Text('Cancelar'),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
   }
 
   String? _subtitleFor(Appointment a) {
     final parts = <String>[];
 
-    final date = a.appointmentDate?.trim();
-    final time = a.appointmentTime?.trim();
-    if (date != null && date.isNotEmpty) parts.add(date);
-    if (time != null && time.isNotEmpty) parts.add(time);
+    final date = AppFormatters.formatDateFlexible(a.appointmentDate);
+    final time = AppFormatters.formatTimeFlexible(a.appointmentTime);
+    if (date.isNotEmpty) parts.add(date);
+    if (time.isNotEmpty) parts.add(time);
 
     final employee = a.employeeName?.trim();
     if (employee != null && employee.isNotEmpty) parts.add(employee);
 
     if (parts.isEmpty) return null;
     return parts.join(' • ');
+  }
+
+  Widget _statusChip(BuildContext context, AppointmentStatus status) {
+    final theme = Theme.of(context);
+
+    final (label, bg, fg) = switch (status) {
+      AppointmentStatus.scheduled => (
+          'Agendado',
+          theme.colorScheme.secondaryContainer,
+          theme.colorScheme.onSecondaryContainer,
+        ),
+      AppointmentStatus.confirmed => (
+          'Confirmado',
+          theme.colorScheme.primaryContainer,
+          theme.colorScheme.onPrimaryContainer,
+        ),
+      AppointmentStatus.completed => (
+          'Concluído',
+          theme.colorScheme.tertiaryContainer,
+          theme.colorScheme.onTertiaryContainer,
+        ),
+      AppointmentStatus.canceled => (
+          'Cancelado',
+          theme.colorScheme.errorContainer,
+          theme.colorScheme.onErrorContainer,
+        ),
+      AppointmentStatus.unknown => (
+          'Status',
+          theme.colorScheme.surfaceContainerHighest,
+          theme.colorScheme.onSurface,
+        ),
+    };
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: theme.textTheme.labelSmall?.copyWith(color: fg),
+      ),
+    );
   }
 
   Future<void> _confirmCancel(
@@ -170,7 +256,9 @@ class _AppointmentTile extends ConsumerWidget {
       await ref
           .read(appointmentsControllerProvider(scope).notifier)
           .cancelAppointment(appointmentId);
-        await ref.read(appointmentsControllerProvider(scope).notifier).refresh();
+
+      // O controller invalida ambas as abas; aqui só aguardamos refresh local.
+      await ref.read(appointmentsControllerProvider(scope).notifier).refresh();
 
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

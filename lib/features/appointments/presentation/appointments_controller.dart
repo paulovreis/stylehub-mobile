@@ -135,6 +135,10 @@ class AppointmentsController
       await ref
           .read(appointmentsApiProvider)
           .cancelAppointment(appointmentId: id);
+
+      // Recarrega ambas as abas para refletir mudança de status.
+      ref.invalidate(appointmentsControllerProvider(AppointmentsScope.upcoming));
+      ref.invalidate(appointmentsControllerProvider(AppointmentsScope.history));
     } catch (e) {
       final failure = mapDioError(e);
       throw failure;
@@ -151,7 +155,7 @@ class AppointmentsController
             page: page,
             limit: _defaultLimit,
           );
-      return _AppointmentsPage.parse(raw);
+      return _AppointmentsPage.parse(raw).filteredFor(scope);
     } catch (e) {
       final failure = mapDioError(e);
       throw failure;
@@ -194,6 +198,15 @@ class _AppointmentsPage {
     }
 
     return const _AppointmentsPage(items: [], hasMore: false);
+  }
+}
+
+extension on _AppointmentsPage {
+  _AppointmentsPage filteredFor(AppointmentsScope scope) {
+    final filtered = scope == AppointmentsScope.upcoming
+        ? items.where((a) => a.isUpcoming).toList()
+        : items.where((a) => a.isHistory).toList();
+    return _AppointmentsPage(items: filtered, hasMore: hasMore);
   }
 }
 

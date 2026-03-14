@@ -1,4 +1,4 @@
-import 'package:beauty_salon_client/features/profile/domain/me_profile.dart';
+import 'package:stylehub_mobile/features/profile/domain/me_profile.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
