@@ -1,5 +1,5 @@
-name: beauty_salon_client
-description: "Beauty Salon (Cliente) — app do cliente para agendar e acompanhar serviços."
+name: StyleHub
+description: "StyleHub, sua beleza a um toque de distância."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
