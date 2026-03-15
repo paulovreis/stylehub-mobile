@@ -1,7 +1,7 @@
-import 'package:stylehub_mobile/features/appointments/data/appointments_api.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http_mock_adapter/http_mock_adapter.dart';
+import 'package:stylehub_mobile/features/appointments/data/appointments_api.dart';
 
 void main() {
   test('AppointmentsApi sends scope+limit without page on first page', () async {

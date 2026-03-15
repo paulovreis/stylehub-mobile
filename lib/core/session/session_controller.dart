@@ -7,6 +7,7 @@ import '../config/storage_keys.dart';
 import '../storage/hive_cache.dart';
 import '../storage/prefs_storage.dart';
 import '../storage/secure_token_storage.dart';
+import '../utils/jwt_utils.dart';
 import 'session_state.dart';
 
 final prefsStorageProvider = FutureProvider<PrefsStorage>((ref) async {
@@ -46,7 +47,15 @@ class SessionController extends AsyncNotifier<SessionState> {
 
     final token = await secure.read(StorageKeys.authAccessToken);
 
-    return SessionState(selectedSalon: salon, accessToken: token);
+    String? validToken = token;
+    if (validToken != null && validToken.trim().isNotEmpty) {
+      if (JwtUtils.isExpired(validToken)) {
+        await secure.delete(StorageKeys.authAccessToken);
+        validToken = null;
+      }
+    }
+
+    return SessionState(selectedSalon: salon, accessToken: validToken);
   }
 
   Future<void> setSalon(SelectedSalon salon) async {

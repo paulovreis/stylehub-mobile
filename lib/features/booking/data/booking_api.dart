@@ -13,7 +13,7 @@ class BookingApi {
     final res = await _dio.get<Object?>(
       '/available-slots/$employeeId/$dateYmd',
       queryParameters: {
-        if (serviceId != null) 'serviceId': serviceId,
+        if (serviceId != null) 'service_id': serviceId,
       },
     );
 

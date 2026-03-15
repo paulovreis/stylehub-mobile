@@ -34,7 +34,7 @@ class Appointment with _$Appointment {
       'appointment_date',
       'date',
       'day',
-    ]);
+    ],);
 
     map['appointmentTime'] ??= _firstPresent(map, const [
       'appointment_time',
@@ -42,17 +42,19 @@ class Appointment with _$Appointment {
       'hour',
       'start_time',
       'startTime',
-    ]);
+    ],);
 
     map['serviceName'] ??= _serviceNameFrom(map);
     map['employeeName'] ??= _employeeNameFrom(map);
 
     // Normaliza status (scheduled/confirmed/completed/canceled).
-    final status = _normalizeStatus(_firstPresent(map, const [
-      'status',
-      'state',
-      'appointment_status',
-    ]));
+    final status = _normalizeStatus(
+      _firstPresent(map, const [
+        'status',
+        'state',
+        'appointment_status',
+      ],),
+    );
     map['status'] = status;
 
     return Appointment.fromJson(map);

@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -167,16 +165,9 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
                                         labelText: l10n.profileEmailLabel,
                                         prefixIcon: const Icon(Icons.alternate_email),
                                       ),
+                                      enabled: false,
                                       keyboardType: TextInputType.emailAddress,
                                       textInputAction: TextInputAction.next,
-                                      validator: (v) {
-                                        final value = (v ?? '').trim();
-                                        if (value.isEmpty) return l10n.profileEmailRequired;
-                                        if (!Validators.isValidEmail(value)) {
-                                          return l10n.profileEmailInvalid;
-                                        }
-                                        return null;
-                                      },
                                     ),
                                     const SizedBox(height: 12),
                                     TextFormField(
@@ -229,7 +220,6 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
                                                         .read(profileControllerProvider.notifier)
                                                         .save(
                                                           name: _name.text,
-                                                          email: _email.text,
                                                           phone: AppFormatters.onlyDigits(_phone.text),
                                                         );
                                                     if (!mounted) return;
@@ -305,7 +295,14 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
 
     if (ok != true) return;
 
-    unawaited(ref.read(pushControllerProvider.notifier).onLogout());
+    try {
+      await ref
+          .read(pushControllerProvider.notifier)
+          .onLogout()
+          .timeout(const Duration(seconds: 3));
+    } catch (_) {
+      // Logout deve funcionar mesmo sem rede.
+    }
     await ref.read(sessionControllerProvider.notifier).clearAccessToken();
     if (!context.mounted) return;
     context.go('/login');
@@ -339,7 +336,14 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
 
     if (ok != true) return;
 
-    unawaited(ref.read(pushControllerProvider.notifier).onLogout());
+    try {
+      await ref
+          .read(pushControllerProvider.notifier)
+          .onLogout()
+          .timeout(const Duration(seconds: 3));
+    } catch (_) {
+      // Troca de salão deve funcionar mesmo sem rede.
+    }
     await ref.read(sessionControllerProvider.notifier).logoutAndReset();
     if (!context.mounted) return;
     context.go('/select-salon');

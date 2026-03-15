@@ -5,14 +5,23 @@ import 'package:hive_flutter/hive_flutter.dart';
 class HiveCache {
   static const _boxName = 'cache';
 
+  static Future<void>? _initFuture;
+
   static const _kServices = 'catalog.services.json';
   static const _kEmployees = 'catalog.employees.json';
   static const _kMeta = 'salon.meta.json';
   static const _kTimestamps = 'cache.timestamps.json';
 
   static Future<void> init() async {
+    _initFuture ??= _init();
+    await _initFuture;
+  }
+
+  static Future<void> _init() async {
     await Hive.initFlutter();
-    await Hive.openBox<String>(_boxName);
+    if (!Hive.isBoxOpen(_boxName)) {
+      await Hive.openBox<String>(_boxName);
+    }
   }
 
   Box<String> get _box => Hive.box<String>(_boxName);

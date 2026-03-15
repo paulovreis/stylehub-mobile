@@ -186,6 +186,18 @@ class _NotificationsPage {
 }
 
 bool _hasMoreFrom(Map<String, dynamic> map) {
+  final pagination = map['pagination'];
+  if (pagination is Map) {
+    final p = pagination.map((k, v) => MapEntry(k.toString(), v));
+    final current = _toIntOrNull(
+      p['currentPage'] ?? p['current_page'] ?? p['page'] ?? p['current'],
+    );
+    final total = _toIntOrNull(
+      p['totalPages'] ?? p['total_pages'] ?? p['pages'] ?? p['total'],
+    );
+    if (current != null && total != null) return current < total;
+  }
+
   final v = map['has_more'] ??
       map['hasMore'] ??
       map['hasNext'] ??
@@ -209,4 +221,12 @@ bool _hasMoreFrom(Map<String, dynamic> map) {
   }
 
   return false;
+}
+
+int? _toIntOrNull(Object? value) {
+  if (value == null) return null;
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  if (value is String) return int.tryParse(value.trim());
+  return null;
 }

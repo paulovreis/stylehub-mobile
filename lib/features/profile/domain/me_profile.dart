@@ -16,20 +16,36 @@ class MeProfile with _$MeProfile {
       _$MeProfileFromJson(json);
 
   factory MeProfile.parse(Map<String, dynamic> json) {
-    final map = Map<String, dynamic>.from(json);
+    final top = Map<String, dynamic>.from(json);
 
-    // Alguns backends retornam envelope (ex: { data: { ... } } ou { user: { ... } }).
-    final inner = _toStringKeyedMapOrNull(
-      map['data'] ?? map['user'] ?? map['me'],
-    );
-    final src = inner ?? map;
+    // Contract: { user: {...}, client: {...} }
+    // Some backends wrap it: { data: { user: {...}, client: {...} } }
+    final envelope = _toStringKeyedMapOrNull(top['data']) ?? top;
+
+    final user = _toStringKeyedMapOrNull(envelope['user']) ??
+        _toStringKeyedMapOrNull(envelope['me']);
+    final client = _toStringKeyedMapOrNull(envelope['client']);
 
     final out = <String, dynamic>{};
 
-    out['id'] = _toIntOrNull(_firstPresent(src, const ['id', 'user_id', 'client_id']));
-    out['name'] = _firstPresent(src, const ['name', 'full_name', 'fullname', 'client_name']);
-    out['email'] = _firstPresent(src, const ['email', 'mail']);
-    out['phone'] = _firstPresent(src, const ['phone', 'phone_number', 'mobile', 'cellphone']);
+    // Prefer client.id if present (more useful for profile screens), fallback to user.id.
+    out['id'] = _toIntOrNull(
+      _firstPresent(
+        client ?? user ?? envelope,
+        const ['id', 'client_id', 'user_id'],
+      ),
+    );
+
+    // Prefer client fields; fallback to user/envelope.
+    final primary = client ?? envelope;
+    final secondary = user ?? envelope;
+
+    out['name'] = _firstPresent(primary, const ['name', 'full_name', 'fullname', 'client_name']) ??
+        _firstPresent(secondary, const ['name', 'full_name', 'fullname', 'client_name']);
+    out['email'] = _firstPresent(primary, const ['email', 'mail']) ??
+        _firstPresent(secondary, const ['email', 'mail']);
+    out['phone'] = _firstPresent(primary, const ['phone', 'phone_number', 'mobile', 'cellphone']) ??
+        _firstPresent(secondary, const ['phone', 'phone_number', 'mobile', 'cellphone']);
 
     return MeProfile.fromJson(out);
   }

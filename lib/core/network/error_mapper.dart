@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -88,10 +89,50 @@ AppFailure mapDioError(Object error) {
 
 String? _extractMessage(Object? data) {
   if (data == null) return null;
+  if (data is String) {
+    final v = data.trim();
+    if (v.isEmpty) return null;
+
+    // Avoid leaking HTML pages as error messages.
+    final upper = v.toUpperCase();
+    if (upper.contains('<HTML') || upper.contains('<!DOCTYPE') || upper.contains('<BODY')) {
+      return null;
+    }
+
+    // If looks like JSON, try decoding.
+    if ((v.startsWith('{') && v.endsWith('}')) || (v.startsWith('[') && v.endsWith(']'))) {
+      try {
+        final decoded = jsonDecode(v);
+        return _extractMessage(decoded) ?? (v.length <= 200 ? v : null);
+      } catch (_) {
+        // Fall through.
+      }
+    }
+
+    return v.length <= 200 ? v : null;
+  }
   if (data is Map) {
     final msg = data['message'];
     if (msg is String && msg.trim().isNotEmpty) {
       return msg.trim();
+    }
+
+    // express-validator format: { errors: [ { msg, path, ... } ] }
+    final errors = data['errors'];
+    if (errors is List && errors.isNotEmpty) {
+      final first = errors.first;
+      if (first is String && first.trim().isNotEmpty) {
+        return first.trim();
+      }
+      if (first is Map) {
+        final m = first.map((k, v) => MapEntry(k.toString(), v));
+        final emsg = m['msg'] ?? m['message'];
+        final path = m['path'] ?? m['field'];
+        if (emsg is String && emsg.trim().isNotEmpty) {
+          final p = path is String ? path.trim() : '';
+          return p.isEmpty ? emsg.trim() : '${emsg.trim()} ($p)';
+        }
+      }
     }
   }
   return null;

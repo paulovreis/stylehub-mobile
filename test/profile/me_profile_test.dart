@@ -1,5 +1,5 @@
-import 'package:stylehub_mobile/features/profile/domain/me_profile.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:stylehub_mobile/features/profile/domain/me_profile.dart';
 
 void main() {
   test('MeProfile.parse reads flat payload', () {

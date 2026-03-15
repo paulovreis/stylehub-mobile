@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/network/app_failure.dart';
-import '../../../core/utils/formatters.dart';
 import '../../../core/utils/debouncer.dart';
+import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/app_error_view.dart';
 import '../../catalog/domain/service.dart';
 import '../../catalog/presentation/catalog_providers.dart';

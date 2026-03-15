@@ -50,16 +50,18 @@ class AuthApi {
   }
 
   Future<bool> validateResetToken({required String token}) async {
-    final res = await _dio.post<Object?>(
-      '/auth/validate-reset-token',
-      data: {'token': token},
-    );
+    // Contract: GET /auth/validate-reset-token/:token
+    final safe = Uri.encodeComponent(token.trim());
+    if (safe.isEmpty) return false;
 
-    final map = _asMap(res.data);
-    final v = map['valid'] ?? map['is_valid'] ?? map['ok'];
-    if (v is bool) return v;
-    if (v is String) return v.toLowerCase() == 'true';
-    return true;
+    try {
+      await _dio.get<Object?>('/auth/validate-reset-token/$safe');
+      return true;
+    } on DioException catch (e) {
+      // Contract: 400 => invalid/expired token.
+      if (e.response?.statusCode == 400) return false;
+      rethrow;
+    }
   }
 
   Future<void> resetPassword({
@@ -70,7 +72,8 @@ class AuthApi {
       '/auth/reset-password',
       data: {
         'token': token,
-        'new_password': newPassword,
+        // Contract: newPassword (camelCase)
+        'newPassword': newPassword,
       },
     );
   }

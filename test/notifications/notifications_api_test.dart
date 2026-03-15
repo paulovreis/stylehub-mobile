@@ -1,7 +1,7 @@
-import 'package:stylehub_mobile/features/notifications/data/notifications_api.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http_mock_adapter/http_mock_adapter.dart';
+import 'package:stylehub_mobile/features/notifications/data/notifications_api.dart';
 
 void main() {
   test('NotificationsApi sends limit without page on first page', () async {

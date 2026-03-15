@@ -26,7 +26,6 @@ class ProfileController extends AsyncNotifier<MeProfile> {
 
   Future<bool> save({
     required String name,
-    required String email,
     required String phone,
   }) async {
     final previous = state.valueOrNull;
@@ -35,7 +34,6 @@ class ProfileController extends AsyncNotifier<MeProfile> {
     try {
       final json = await ref.read(profileApiProvider).updateMe(
             name: name,
-            email: email,
             phone: phone,
           );
 
@@ -44,13 +42,8 @@ class ProfileController extends AsyncNotifier<MeProfile> {
       return true;
     } catch (e, st) {
       final failure = mapDioError(e);
-      if (previous != null) {
-        // Mantém dados antigos na tela, mas expõe o erro via AsyncError.
-        state = AsyncError(failure, st);
-        state = AsyncData(previous);
-      } else {
-        state = AsyncError(failure, st);
-      }
+      // Mantém dados antigos na tela se existirem; caso contrário, expõe o erro.
+      state = previous != null ? AsyncData(previous) : AsyncError(failure, st);
       return false;
     }
   }

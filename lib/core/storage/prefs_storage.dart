@@ -21,11 +21,15 @@ class PrefsStorage {
   Map<String, Object?>? getJsonMap(String key) {
     final raw = _prefs.getString(key);
     if (raw == null || raw.isEmpty) return null;
-    final decoded = jsonDecode(raw);
-    if (decoded is Map) {
-      return decoded.map((k, v) => MapEntry(k.toString(), v));
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is Map) {
+        return decoded.map((k, v) => MapEntry(k.toString(), v));
+      }
+      return null;
+    } catch (_) {
+      return null;
     }
-    return null;
   }
 
   Future<void> setJsonMap(String key, Map<String, Object?> value) async {
