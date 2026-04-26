@@ -43,9 +43,8 @@ class _BookingServiceScreenState extends ConsumerState<BookingServiceScreen> {
             child: TextField(
               controller: _search,
               decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.search),
-                hintText: 'Buscar serviço',
-                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.search_rounded),
+                hintText: 'Buscar serviço...',
               ),
               onChanged: (v) {
                 _debouncer.run(() {
@@ -64,21 +63,21 @@ class _BookingServiceScreenState extends ConsumerState<BookingServiceScreen> {
                   if (filtered.isEmpty) {
                     return ListView(
                       children: [
-                        const SizedBox(height: 120),
+                        const SizedBox(height: 80),
                         Center(
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            padding: const EdgeInsets.symmetric(horizontal: 32),
                             child: Column(
                               children: [
                                 Icon(
-                                  Icons.search_off,
-                                  size: 32,
+                                  Icons.search_off_rounded,
+                                  size: 48,
                                   color: theme.colorScheme.onSurfaceVariant,
                                 ),
-                                const SizedBox(height: 12),
+                                const SizedBox(height: 16),
                                 Text(
-                                  'Nenhum serviço encontrado.',
-                                  style: theme.textTheme.titleSmall,
+                                  'Nenhum serviço encontrado',
+                                  style: theme.textTheme.titleMedium,
                                   textAlign: TextAlign.center,
                                 ),
                                 const SizedBox(height: 6),
@@ -98,60 +97,17 @@ class _BookingServiceScreenState extends ConsumerState<BookingServiceScreen> {
                   }
 
                   return ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                     itemCount: filtered.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 10),
                     itemBuilder: (context, i) {
                       final s = filtered[i];
-
-                      final name = (s.name ?? 'Serviço').trim();
-                      final duration = s.durationMinutes;
-                      final price = s.recommendedPrice;
-
-                      final metaParts = <String>[];
-                      if (duration != null && duration > 0) metaParts.add('$duration min');
-                      if (price != null) metaParts.add(AppFormatters.formatCurrencyBR(price));
-                      final meta = metaParts.isEmpty ? null : metaParts.join(' • ');
-
-                      return Card(
-                        color: theme.colorScheme.surfaceContainerLowest,
-                        child: InkWell(
-                          onTap: () {
-                            ref.read(bookingFlowProvider.notifier).selectService(s);
-                            context.push('/book/employee');
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.all(14),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        name,
-                                        style: theme.textTheme.titleMedium,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      if (meta != null) ...[
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          meta,
-                                          style: theme.textTheme.bodyMedium?.copyWith(
-                                            color: theme.colorScheme.onSurfaceVariant,
-                                          ),
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                const Icon(Icons.chevron_right),
-                              ],
-                            ),
-                          ),
-                        ),
+                      return _ServiceCard(
+                        service: s,
+                        onTap: () {
+                          ref.read(bookingFlowProvider.notifier).selectService(s);
+                          context.push('/book/employee');
+                        },
                       );
                     },
                   );
@@ -170,12 +126,107 @@ class _BookingServiceScreenState extends ConsumerState<BookingServiceScreen> {
   }
 }
 
+class _ServiceCard extends StatelessWidget {
+  const _ServiceCard({required this.service, required this.onTap});
+
+  final Service service;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    final name = (service.name ?? 'Serviço').trim();
+    final duration = service.durationMinutes;
+    final price = service.recommendedPrice;
+
+    return Card(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.secondaryContainer,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(
+                  Icons.spa_rounded,
+                  size: 22,
+                  color: theme.colorScheme.secondary,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: theme.textTheme.titleSmall,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        if (duration != null && duration > 0) ...[
+                          Icon(Icons.schedule_rounded,
+                              size: 13, color: theme.colorScheme.onSurfaceVariant,),
+                          const SizedBox(width: 4),
+                          Text(
+                            '$duration min',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          if (price != null) ...[
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 6),
+                              child: Text(
+                                '·',
+                                style: TextStyle(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                        if (price != null)
+                          Text(
+                            AppFormatters.formatCurrencyBR(price),
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 List<Service> _filterServices(List<Service> items, String query) {
   final q = query.trim().toLowerCase();
   if (q.isEmpty) return items;
-  return items
-      .where((s) => (s.name ?? '').toLowerCase().contains(q))
-      .toList();
+  return items.where((s) => (s.name ?? '').toLowerCase().contains(q)).toList();
 }
 
 String _messageForError(Object err) {

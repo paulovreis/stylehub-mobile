@@ -20,111 +20,72 @@ class HomeTab extends ConsumerWidget {
       onRefresh: () => ref.read(dashboardControllerProvider.notifier).refresh(),
       child: CustomScrollView(
         slivers: [
-          const SliverAppBar(
+          SliverAppBar(
             pinned: true,
-            title: Text('Início'),
+            title: const Text('Início'),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.add_circle_outline_rounded),
+                tooltip: 'Novo agendamento',
+                onPressed: () => context.push('/book/service'),
+              ),
+            ],
           ),
           ...dashboard.when(
-            data: (data) {
-              return [
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _NextAppointmentCard(data: data),
-                        const SizedBox(height: 16),
-                        Wrap(
-                          spacing: 12,
-                          runSpacing: 12,
-                          children: [
-                            _ShortcutCard(
-                              icon: Icons.add_circle_outline,
-                              label: 'Agendar',
-                              onTap: () => context.push('/book/service'),
-                            ),
-                            _ShortcutCard(
-                              icon: Icons.notifications_none,
-                              label: 'Notificações',
-                              onTap: () => context.go('/notifications'),
-                            ),
-                            _ShortcutCard(
-                              icon: Icons.person_outline,
-                              label: 'Perfil',
-                              onTap: () => context.go('/profile'),
-                            ),
-                          ],
+            data: (data) => [
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _NextAppointmentCard(data: data),
+                      const SizedBox(height: 20),
+                      Text(
+                        'Ações rápidas',
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 10),
+                      _ShortcutsRow(),
+                    ],
                   ),
                 ),
-              ];
-            },
-            loading: () {
-              return [
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Próximo agendamento',
-                                  style: theme.textTheme.titleMedium,
-                                ),
-                                const SizedBox(height: 12),
-                                const LinearProgressIndicator(),
-                              ],
-                            ),
-                          ),
+              ),
+            ],
+            loading: () => [
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _LoadingAppointmentCard(),
+                      const SizedBox(height: 20),
+                      Text(
+                        'Ações rápidas',
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
-                        const SizedBox(height: 16),
-                        Wrap(
-                          spacing: 12,
-                          runSpacing: 12,
-                          children: [
-                            _ShortcutCard(
-                              icon: Icons.add_circle_outline,
-                              label: 'Agendar',
-                              onTap: () => context.push('/book/service'),
-                            ),
-                            _ShortcutCard(
-                              icon: Icons.notifications_none,
-                              label: 'Notificações',
-                              onTap: () => context.go('/notifications'),
-                            ),
-                            _ShortcutCard(
-                              icon: Icons.person_outline,
-                              label: 'Perfil',
-                              onTap: () => context.go('/profile'),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 10),
+                      _ShortcutsRow(),
+                    ],
                   ),
                 ),
-              ];
-            },
-            error: (err, _) {
-              return [
-                SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: AppErrorView(
-                    message: _errorMessage(err),
-                    onRetry: () => ref.read(dashboardControllerProvider.notifier).refresh(),
-                  ),
+              ),
+            ],
+            error: (err, _) => [
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: AppErrorView(
+                  message: _errorMessage(err),
+                  onRetry: () =>
+                      ref.read(dashboardControllerProvider.notifier).refresh(),
                 ),
-              ];
-            },
+              ),
+            ],
           ),
         ],
       ),
@@ -142,33 +103,97 @@ class _NextAppointmentCard extends StatelessWidget {
     final theme = Theme.of(context);
     final next = data.nextAppointment;
 
-    return Card(
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            theme.colorScheme.primaryContainer,
+            theme.colorScheme.secondaryContainer,
+          ],
+        ),
+        border: Border.all(
+          color: theme.colorScheme.primary.withAlpha(30),
+          width: 1,
+        ),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Próximo agendamento',
-              style: theme.textTheme.titleMedium,
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withAlpha(20),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.calendar_today_rounded,
+                    size: 18,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  'Próximo agendamento',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: theme.colorScheme.onPrimaryContainer,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
             if (next == null) ...[
-              Text('Nenhum agendamento próximo.', style: theme.textTheme.bodyMedium),
-              const SizedBox(height: 12),
-              OutlinedButton.icon(
+              Text(
+                'Nenhum agendamento\npróximo.',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: theme.colorScheme.onPrimaryContainer,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 14),
+              FilledButton.icon(
                 onPressed: () => context.push('/book/service'),
-                icon: const Icon(Icons.add_circle_outline),
-                label: const Text('Agendar'),
+                icon: const Icon(Icons.add_rounded, size: 18),
+                label: const Text('Agendar agora'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
+                  minimumSize: const Size(0, 42),
+                  textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                ),
               ),
             ] else ...[
               Text(
-                _formatNextAppointment(next),
-                style: theme.textTheme.bodyMedium,
+                _formatDateTime(next),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: theme.colorScheme.onPrimaryContainer,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 6),
+              Text(
+                _formatDetail(next),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onPrimaryContainer.withAlpha(180),
+                ),
+              ),
+              const SizedBox(height: 14),
               OutlinedButton(
                 onPressed: () => context.go('/appointments'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: theme.colorScheme.onPrimaryContainer,
+                  side: BorderSide(
+                    color: theme.colorScheme.onPrimaryContainer.withAlpha(80),
+                  ),
+                  minimumSize: const Size(0, 42),
+                  textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                ),
                 child: const Text('Ver agendamentos'),
               ),
             ],
@@ -177,33 +202,83 @@ class _NextAppointmentCard extends StatelessWidget {
       ),
     );
   }
+
+  String _formatDateTime(DashboardNextAppointment next) {
+    final date = AppFormatters.formatDateFlexible(next.appointmentDate);
+    final time = AppFormatters.formatTimeFlexible(next.appointmentTime);
+    final parts = [if (date.isNotEmpty) date, if (time.isNotEmpty) time];
+    return parts.isEmpty ? 'Agendamento confirmado' : parts.join(' • ');
+  }
+
+  String _formatDetail(DashboardNextAppointment next) {
+    final parts = <String>[
+      if (next.serviceName?.trim().isNotEmpty ?? false) next.serviceName!.trim(),
+      if (next.employeeName?.trim().isNotEmpty ?? false) next.employeeName!.trim(),
+    ];
+    return parts.join(' • ');
+  }
 }
 
-String _formatNextAppointment(DashboardNextAppointment next) {
-  final dateRaw = next.appointmentDate;
-  final timeRaw = next.appointmentTime;
-  final service = next.serviceName;
-  final employee = next.employeeName;
-
-  final parts = <String>[];
-  final date = AppFormatters.formatDateFlexible(dateRaw);
-  final time = AppFormatters.formatTimeFlexible(timeRaw);
-  if (date.isNotEmpty) parts.add(date);
-  if (time.isNotEmpty) parts.add(time);
-
-  final title = parts.isEmpty ? 'Agendamento confirmado' : parts.join(' • ');
-
-  final detail = <String>[];
-  if (service != null && service.trim().isNotEmpty) detail.add(service.trim());
-  if (employee != null && employee.trim().isNotEmpty) detail.add(employee.trim());
-
-  if (detail.isEmpty) return title;
-  return '$title\n${detail.join(' • ')}';
+class _LoadingAppointmentCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: theme.colorScheme.primaryContainer,
+        border: Border.all(
+          color: theme.colorScheme.primary.withAlpha(30),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Próximo agendamento',
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: theme.colorScheme.onPrimaryContainer,
+            ),
+          ),
+          const SizedBox(height: 14),
+          LinearProgressIndicator(
+            borderRadius: BorderRadius.circular(4),
+            color: theme.colorScheme.primary,
+            backgroundColor: theme.colorScheme.primary.withAlpha(30),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-String _errorMessage(Object err) {
-  if (err is AppFailure) return err.message;
-  return 'Não foi possível carregar o dashboard.';
+class _ShortcutsRow extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        _ShortcutCard(
+          icon: Icons.add_circle_rounded,
+          label: 'Agendar',
+          onTap: () => context.push('/book/service'),
+        ),
+        const SizedBox(width: 10),
+        _ShortcutCard(
+          icon: Icons.notifications_rounded,
+          label: 'Notificações',
+          onTap: () => context.go('/notifications'),
+        ),
+        const SizedBox(width: 10),
+        _ShortcutCard(
+          icon: Icons.person_rounded,
+          label: 'Perfil',
+          onTap: () => context.go('/profile'),
+        ),
+      ],
+    );
+  }
 }
 
 class _ShortcutCard extends StatelessWidget {
@@ -220,26 +295,54 @@ class _ShortcutCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return InkWell(
-      borderRadius: BorderRadius.circular(16),
-      onTap: onTap,
-      child: Ink(
-        width: (MediaQuery.sizeOf(context).width - 16 * 2 - 12) / 2,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          color: theme.colorScheme.surfaceContainerHighest,
-        ),
-        child: Row(
-          children: [
-            Icon(icon),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(label, style: theme.textTheme.titleSmall),
+    return Expanded(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Ink(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            color: theme.colorScheme.surfaceContainerHighest,
+            border: Border.all(
+              color: theme.colorScheme.outlineVariant,
+              width: 0.8,
             ),
-          ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  icon,
+                  size: 22,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
+}
+
+String _errorMessage(Object err) {
+  if (err is AppFailure) return err.message;
+  return 'Não foi possível carregar o dashboard.';
 }

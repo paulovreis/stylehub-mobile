@@ -29,6 +29,7 @@ class _BookingConfirmScreenState extends ConsumerState<BookingConfirmScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final draft = ref.watch(bookingFlowProvider);
     final service = draft.service;
     final employee = draft.employee;
@@ -58,49 +59,59 @@ class _BookingConfirmScreenState extends ConsumerState<BookingConfirmScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Confirmar agendamento')),
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      service?.name ?? 'Serviço',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(employee?.name ?? 'Profissional'),
-                    const SizedBox(height: 4),
-                    Text('$date • $time'),
-                  ],
-                ),
-              ),
+            _SummaryCard(
+              serviceName: service?.name ?? 'Serviço',
+              employeeName: employeeTitle(employee),
+              date: date,
+              time: time,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             TextField(
               controller: _notes,
               minLines: 2,
               maxLines: 4,
               decoration: const InputDecoration(
                 labelText: 'Observações (opcional)',
-                border: OutlineInputBorder(),
+                prefixIcon: Padding(
+                  padding: EdgeInsets.only(bottom: 40),
+                  child: Icon(Icons.notes_rounded),
+                ),
+                alignLabelWithHint: true,
               ),
               onChanged: (v) => ref.read(bookingFlowProvider.notifier).setNotes(v),
             ),
             if (_error != null) ...[
               const SizedBox(height: 12),
-              Text(
-                _error!,
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.errorContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.error_outline,
+                        color: theme.colorScheme.onErrorContainer, size: 18,),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        _error!,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onErrorContainer,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
             const Spacer(),
             AppPrimaryButton(
-              label: 'Confirmar',
+              label: 'Confirmar agendamento',
               loading: _loading,
               onPressed: _loading
                   ? null
@@ -175,5 +186,122 @@ class _BookingConfirmScreenState extends ConsumerState<BookingConfirmScreen> {
         });
       }
     }
+  }
+}
+
+class _SummaryCard extends StatelessWidget {
+  const _SummaryCard({
+    required this.serviceName,
+    required this.employeeName,
+    required this.date,
+    required this.time,
+  });
+
+  final String serviceName;
+  final String employeeName;
+  final String date;
+  final String time;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.check_circle_outline_rounded,
+                    size: 20,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Resumo do agendamento',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _SummaryRow(
+              icon: Icons.spa_rounded,
+              label: 'Serviço',
+              value: serviceName,
+            ),
+            const SizedBox(height: 12),
+            _SummaryRow(
+              icon: Icons.person_outline_rounded,
+              label: 'Profissional',
+              value: employeeName,
+            ),
+            const SizedBox(height: 12),
+            _SummaryRow(
+              icon: Icons.calendar_today_rounded,
+              label: 'Data',
+              value: date,
+            ),
+            const SizedBox(height: 12),
+            _SummaryRow(
+              icon: Icons.schedule_rounded,
+              label: 'Horário',
+              value: time,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SummaryRow extends StatelessWidget {
+  const _SummaryRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: theme.colorScheme.onSurfaceVariant),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(value, style: theme.textTheme.bodyMedium),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 }

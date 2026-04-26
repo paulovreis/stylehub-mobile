@@ -6,26 +6,41 @@ class AppPrimaryButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.loading = false,
+    this.icon,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final bool loading;
+  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
+    final child = loading
+        ? SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              strokeWidth: 2.5,
+              color: Theme.of(context).colorScheme.onPrimary,
+            ),
+          )
+        : icon != null
+            ? Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, size: 18),
+                  const SizedBox(width: 8),
+                  Text(label),
+                ],
+              )
+            : Text(label);
+
     return SizedBox(
       width: double.infinity,
-      height: 48,
       child: FilledButton(
         onPressed: loading ? null : onPressed,
-        child: loading
-            ? const SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : Text(label),
+        child: child,
       ),
     );
   }
