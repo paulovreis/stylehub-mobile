@@ -10,8 +10,13 @@ class CatalogApi {
     return _extractListOfMaps(res.data, const ['services', 'data', 'items']);
   }
 
-  Future<List<Map<String, dynamic>>> fetchEmployees() async {
-    final res = await _dio.get<Object?>('/employees');
+  Future<List<Map<String, dynamic>>> fetchEmployees({int? serviceId}) async {
+    final res = await _dio.get<Object?>(
+      '/employees',
+      queryParameters: {
+        if (serviceId != null) 'service_id': serviceId,
+      },
+    );
     return _extractListOfMaps(res.data, const ['employees', 'data', 'items']);
   }
 }

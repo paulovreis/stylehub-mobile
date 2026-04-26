@@ -60,7 +60,7 @@ class BookingDateTimeScreen extends ConsumerWidget {
               },
               child: draft.dateYmd == null
                   ? ListView(
-                      children: [
+                      children: const [
                         SizedBox(height: 120),
                         Center(child: Text('Escolha uma data para ver horários.')),
                       ],
@@ -69,7 +69,7 @@ class BookingDateTimeScreen extends ConsumerWidget {
                       data: (slots) {
                         if (slots.isEmpty) {
                           return ListView(
-                            children: [
+                            children: const [
                               SizedBox(height: 120),
                               Center(child: Text('Nenhum horário disponível neste dia.')),
                             ],
@@ -81,7 +81,8 @@ class BookingDateTimeScreen extends ConsumerWidget {
                           separatorBuilder: (_, __) => const Divider(height: 1),
                           itemBuilder: (context, i) {
                             final slot = slots[i];
-                            final hm = slot.startTime ?? '';
+                            // ATENÇÃO: Se slot for um Map, use slot['start_time']
+                            final hm = slot.startTime ?? ''; 
                             return ListTile(
                               title: Text(hm),
                               trailing: const Icon(Icons.chevron_right),

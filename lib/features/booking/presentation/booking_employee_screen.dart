@@ -4,8 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/network/app_failure.dart';
 import '../../../core/widgets/app_error_view.dart';
-import '../../catalog/presentation/catalog_providers.dart';
 import 'booking_flow_controller.dart';
+import 'booking_providers.dart';
 
 class BookingEmployeeScreen extends ConsumerWidget {
   const BookingEmployeeScreen({super.key});
@@ -15,7 +15,7 @@ class BookingEmployeeScreen extends ConsumerWidget {
     final draft = ref.watch(bookingFlowProvider);
     final serviceName = draft.service?.name;
 
-    final employeesAsync = ref.watch(employeesControllerProvider);
+    final employeesAsync = ref.watch(bookingEmployeesProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -26,14 +26,14 @@ class BookingEmployeeScreen extends ConsumerWidget {
         ),
       ),
       body: RefreshIndicator(
-        onRefresh: () => ref.read(employeesControllerProvider.notifier).refresh(),
+        onRefresh: () async => ref.invalidate(bookingEmployeesProvider),
         child: employeesAsync.when(
           data: (items) {
             if (items.isEmpty) {
               return ListView(
-                children: [
+                children: const [
                   SizedBox(height: 120),
-                  Center(child: Text('Nenhum profissional disponível.')),
+                  Center(child: Text('Nenhum profissional disponível para este serviço.')),
                 ],
               );
             }
@@ -57,7 +57,7 @@ class BookingEmployeeScreen extends ConsumerWidget {
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (err, _) => AppErrorView(
             message: _messageForEmployeesError(err),
-            onRetry: () => ref.read(employeesControllerProvider.notifier).refresh(),
+            onRetry: () => ref.invalidate(bookingEmployeesProvider),
           ),
         ),
       ),

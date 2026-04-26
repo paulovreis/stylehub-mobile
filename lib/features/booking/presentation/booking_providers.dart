@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/dio_client_provider.dart';
 import '../../../core/network/error_mapper.dart';
 import '../../catalog/domain/employee.dart';
+import '../../catalog/presentation/catalog_providers.dart';
 import '../data/booking_api.dart';
 import '../domain/time_slot.dart';
 import 'booking_flow_controller.dart';
@@ -10,6 +11,17 @@ import 'booking_flow_controller.dart';
 final bookingApiProvider = Provider<BookingApi>((ref) {
   final dio = ref.watch(dioProvider);
   return BookingApi(dio);
+});
+
+final bookingEmployeesProvider = FutureProvider<List<Employee>>((ref) async {
+  final serviceId = ref.watch(bookingFlowProvider).service?.id;
+  if (serviceId == null) return <Employee>[];
+  try {
+    final raw = await ref.read(catalogApiProvider).fetchEmployees(serviceId: serviceId);
+    return raw.map(Employee.parse).where((e) => e.name != null).toList();
+  } catch (e) {
+    throw mapDioError(e);
+  }
 });
 
 final availableSlotsProvider = FutureProvider<List<TimeSlot>>((ref) async {
