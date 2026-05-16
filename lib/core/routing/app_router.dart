@@ -14,6 +14,7 @@ import '../../features/home/presentation/home_shell.dart';
 import '../../features/home/presentation/home_tab.dart';
 import '../../features/notifications/presentation/notifications_tab.dart';
 import '../../features/profile/presentation/profile_tab.dart';
+import '../../features/salon_selection/presentation/scan_salon_qr_screen.dart';
 import '../../features/salon_selection/presentation/select_salon_screen.dart';
 import '../session/session_controller.dart';
 import '../widgets/app_error_view.dart';
@@ -64,6 +65,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/select-salon',
         builder: (context, state) => const SelectSalonScreen(),
+      ),
+      GoRoute(
+        path: '/select-salon/scan',
+        builder: (context, state) => const ScanSalonQrScreen(),
       ),
       GoRoute(
         path: '/login',

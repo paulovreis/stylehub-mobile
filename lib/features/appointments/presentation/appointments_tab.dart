@@ -61,7 +61,18 @@ class _AppointmentsList extends ConsumerWidget {
       ),
       data: (data) {
         if (data.items.isEmpty) {
-          return _EmptyState(scope: scope);
+          return RefreshIndicator(
+            onRefresh: () =>
+                ref.read(appointmentsControllerProvider(scope).notifier).refresh(),
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+              children: [
+                const SizedBox(height: 80),
+                _EmptyState(scope: scope),
+              ],
+            ),
+          );
         }
         return RefreshIndicator(
           onRefresh: () =>

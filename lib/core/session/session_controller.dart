@@ -46,16 +46,18 @@ class SessionController extends AsyncNotifier<SessionState> {
     }
 
     final token = await secure.read(StorageKeys.authAccessToken);
+  final userEmail = prefs.getString(StorageKeys.authUserEmail);
 
     String? validToken = token;
     if (validToken != null && validToken.trim().isNotEmpty) {
       if (JwtUtils.isExpired(validToken)) {
         await secure.delete(StorageKeys.authAccessToken);
+        await prefs.remove(StorageKeys.authUserEmail);
         validToken = null;
       }
     }
 
-    return SessionState(selectedSalon: salon, accessToken: validToken);
+    return SessionState(selectedSalon: salon, accessToken: validToken, userEmail: userEmail);
   }
 
   Future<void> setSalon(SelectedSalon salon) async {
@@ -97,13 +99,34 @@ class SessionController extends AsyncNotifier<SessionState> {
     );
   }
 
+  Future<void> setUserEmail(String? email) async {
+    final prefs = await ref.read(prefsStorageProvider.future);
+    final trimmed = (email ?? '').trim();
+    if (trimmed.isEmpty) {
+      await prefs.remove(StorageKeys.authUserEmail);
+      state = AsyncData(
+        (state.value ?? const SessionState(selectedSalon: null, accessToken: null))
+          .copyWith(clearUserEmail: true),
+      );
+      return;
+    }
+
+    await prefs.setString(StorageKeys.authUserEmail, trimmed);
+    state = AsyncData(
+      (state.value ?? const SessionState(selectedSalon: null, accessToken: null))
+        .copyWith(userEmail: trimmed),
+    );
+  }
+
   Future<void> clearAccessToken() async {
     final secure = ref.read(secureTokenStorageProvider);
+    final prefs = await ref.read(prefsStorageProvider.future);
     await secure.delete(StorageKeys.authAccessToken);
+    await prefs.remove(StorageKeys.authUserEmail);
 
     state = AsyncData(
       (state.value ?? const SessionState(selectedSalon: null, accessToken: null))
-        .copyWith(clearToken: true),
+        .copyWith(clearToken: true, clearUserEmail: true),
     );
   }
 
@@ -113,9 +136,10 @@ class SessionController extends AsyncNotifier<SessionState> {
 
     await prefs.remove(StorageKeys.selectedSalonBaseUrl);
     await prefs.remove(StorageKeys.selectedSalonMetaJson);
+    await prefs.remove(StorageKeys.authUserEmail);
     await secure.delete(StorageKeys.authAccessToken);
 
-    state = const AsyncData(SessionState(selectedSalon: null, accessToken: null));
+    state = const AsyncData(SessionState(selectedSalon: null, accessToken: null, userEmail: null));
   }
 
   /// Helper para armazenar JSON no cache Hive.

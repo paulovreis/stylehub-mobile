@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -16,6 +18,43 @@ class SelectSalonScreen extends ConsumerStatefulWidget {
 class _SelectSalonScreenState extends ConsumerState<SelectSalonScreen> {
   final _url = TextEditingController();
   final _slug = TextEditingController();
+
+  String? _parseSalonSlugFromQr(String raw) {
+    try {
+      final decoded = jsonDecode(raw.trim());
+      if (decoded is! Map) return null;
+
+      final slug = decoded['slug']?.toString().trim() ?? '';
+      if (slug.isEmpty) return null;
+
+      return slug;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _scanAndApplyQr() async {
+    final raw = await context.push<String>('/select-salon/scan');
+    if (!mounted) return;
+    if (raw == null) return;
+
+    final slug = _parseSalonSlugFromQr(raw);
+    if (slug == null) {
+      ref
+          .read(selectSalonControllerProvider.notifier)
+          .setError('QR Code inválido.');
+      return;
+    }
+
+    // IMPORTANTE: o QR Code não deve alterar a URL base usada nas requisições.
+    // Usamos apenas o slug (código do salão).
+    _slug.text = slug;
+
+        await ref.read(selectSalonControllerProvider.notifier).validate(
+          urlInput: '',
+          slugInput: slug,
+        );
+  }
 
   @override
   void dispose() {
@@ -56,6 +95,12 @@ class _SelectSalonScreenState extends ConsumerState<SelectSalonScreen> {
               ),
             ),
             const SizedBox(height: 16),
+            AppPrimaryButton(
+              label: 'Ler QR Code',
+              loading: false,
+              onPressed: ui.isValidating ? null : _scanAndApplyQr,
+            ),
+            const SizedBox(height: 12),
             AppPrimaryButton(
               label: 'Validar',
               loading: ui.isValidating,

@@ -71,17 +71,23 @@ class AppFormatters {
     final digits = onlyDigits(raw);
     if (digits.isEmpty) return '';
 
+    // Suporta +55 (Brasil) quando vier no payload.
+    final hasCountry = digits.startsWith('55') && (digits.length == 12 || digits.length == 13);
+    final local = hasCountry ? digits.substring(2) : digits;
+
     // Heurística para BR: assume que já vem com DDD.
     // 10 dígitos: (DD) XXXX-XXXX
     // 11 dígitos: (DD) 9XXXX-XXXX
-    final ddd = digits.length >= 2 ? digits.substring(0, 2) : digits;
-    final rest = digits.length > 2 ? digits.substring(2) : '';
+    final ddd = local.length >= 2 ? local.substring(0, 2) : local;
+    final rest = local.length > 2 ? local.substring(2) : '';
 
     if (rest.length == 8) {
-      return '($ddd) ${rest.substring(0, 4)}-${rest.substring(4)}';
+      final formatted = '($ddd) ${rest.substring(0, 4)}-${rest.substring(4)}';
+      return hasCountry ? '+55 $formatted' : formatted;
     }
     if (rest.length == 9) {
-      return '($ddd) ${rest.substring(0, 5)}-${rest.substring(5)}';
+      final formatted = '($ddd) ${rest.substring(0, 5)}-${rest.substring(5)}';
+      return hasCountry ? '+55 $formatted' : formatted;
     }
 
     // Fallback: não força máscara se tamanho inesperado.

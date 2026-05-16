@@ -74,6 +74,11 @@ class AuthController extends Notifier<AuthUiState> {
 
       await ref.read(sessionControllerProvider.notifier).setAccessToken(token);
 
+      final emailFromResponse = extractUserEmail(json);
+      if (emailFromResponse != null) {
+        await ref.read(sessionControllerProvider.notifier).setUserEmail(emailFromResponse);
+      }
+
       unawaited(ref.read(pushControllerProvider.notifier).onLogin());
       state = state.copyWith(loading: false);
       return true;
@@ -120,6 +125,11 @@ class AuthController extends Notifier<AuthUiState> {
       final token = extractAccessToken(json);
       if (token != null) {
         await ref.read(sessionControllerProvider.notifier).setAccessToken(token);
+
+        final emailFromResponse = extractUserEmail(json);
+        if (emailFromResponse != null) {
+          await ref.read(sessionControllerProvider.notifier).setUserEmail(emailFromResponse);
+        }
 
         unawaited(ref.read(pushControllerProvider.notifier).onLogin());
       }

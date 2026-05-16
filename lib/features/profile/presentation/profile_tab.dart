@@ -57,6 +57,8 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final profileAsync = ref.watch(profileControllerProvider);
+    final session = ref.watch(sessionControllerProvider).valueOrNull;
+    final sessionEmail = session?.userEmail;
 
     return RefreshIndicator(
       onRefresh: () => ref.read(profileControllerProvider.notifier).refresh(),
@@ -85,7 +87,14 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
               ),
             ],
             data: (profile) {
-              _seedControllers(profile);
+              final effectiveEmail = (profile.email ?? '').trim().isNotEmpty
+                  ? profile.email
+                  : sessionEmail;
+              final viewProfile = effectiveEmail == profile.email
+                  ? profile
+                  : profile.copyWith(email: effectiveEmail);
+
+              _seedControllers(viewProfile);
               return [
                 SliverToBoxAdapter(
                   child: Padding(
@@ -117,13 +126,13 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
                                   ],
                                 ),
                                 const SizedBox(height: 8),
-                                _InfoRow(label: l10n.profileNameLabel, value: profile.name),
+                                _InfoRow(label: l10n.profileNameLabel, value: viewProfile.name),
                                 const SizedBox(height: 8),
-                                _InfoRow(label: l10n.profileEmailLabel, value: profile.email),
+                                _InfoRow(label: l10n.profileEmailLabel, value: viewProfile.email),
                                 const SizedBox(height: 8),
                                 _InfoRow(
                                   label: l10n.profilePhoneLabel,
-                                  value: AppFormatters.formatPhoneBR(profile.phone),
+                                  value: AppFormatters.formatPhoneBR(viewProfile.phone),
                                   emptyText: '-',
                                 ),
                               ],
@@ -196,7 +205,7 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
                                             onPressed: _saving
                                                 ? null
                                                 : () {
-                                                    _resetToProfile(profile);
+                                                    _resetToProfile(viewProfile);
                                                     setState(() => _editing = false);
                                                   },
                                             child: Text(l10n.commonCancel),

@@ -3,6 +3,7 @@ class StorageKeys {
   static const selectedSalonMetaJson = 'selectedSalon.metaJson';
 
   static const authAccessToken = 'auth.accessToken';
+  static const authUserEmail = 'auth.userEmail';
 
   static const pushFcmToken = 'push.fcmToken';
 }

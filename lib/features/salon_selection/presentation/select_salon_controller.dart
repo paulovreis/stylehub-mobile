@@ -50,6 +50,13 @@ class SelectSalonController extends Notifier<SelectSalonUiState> {
   @override
   SelectSalonUiState build() => SelectSalonUiState.initial;
 
+  void setError(String message) {
+    state = state.copyWith(
+      errorMessage: message,
+      clearValid: true,
+    );
+  }
+
   Future<void> validate({required String urlInput, required String slugInput}) async {
     final appConfig = ref.read(appConfigProvider);
 

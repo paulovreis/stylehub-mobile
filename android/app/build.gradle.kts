@@ -5,10 +5,9 @@ plugins {
 }
 
 android {
-    ndkVersion = "27.0.12077973"
     namespace = "com.stylehub.beauty_salon_client"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    compileSdk = 36
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -21,7 +20,7 @@ android {
 
     defaultConfig {
         applicationId = "com.stylehub.beauty_salon_client"
-        minSdk = flutter.minSdkVersion
+        minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
