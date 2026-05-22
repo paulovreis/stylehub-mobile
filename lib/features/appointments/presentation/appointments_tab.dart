@@ -6,7 +6,12 @@ import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/app_error_view.dart';
 import '../../../l10n/app_localizations.dart';
 import '../domain/appointment.dart';
+import '../domain/pix_payment.dart';
 import 'appointments_controller.dart';
+import 'pix_payment_controller.dart';
+import 'widgets/payment_status_badge.dart';
+import 'widgets/payment_success_dialog.dart';
+import 'widgets/pix_payment_bottom_sheet.dart';
 
 class AppointmentsTab extends StatelessWidget {
   const AppointmentsTab({super.key});
@@ -175,7 +180,8 @@ class _AppointmentCard extends ConsumerWidget {
 
     final id = appointment.id;
     final cancelEnabled = canCancel && id != null && appointment.canCancel;
-    final statusChip = _statusChip(context, appointment.statusEnum);
+    final paymentStatus = appointment.paymentStatusEnum;
+    final showPaymentBadge = scope == AppointmentsScope.upcoming;
 
     return Card(
       child: Padding(
@@ -215,11 +221,24 @@ class _AppointmentCard extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                statusChip,
+                _statusChip(context, appointment.statusEnum),
               ],
             ),
+            if (showPaymentBadge) ...[
+              const SizedBox(height: 10),
+              PaymentStatusBadge(status: paymentStatus),
+            ],
+            if (showPaymentBadge && id != null) ...[
+              const SizedBox(height: 10),
+              _PaymentActionButton(
+                appointmentId: id,
+                paymentStatus: paymentStatus,
+                price: appointment.price,
+                scope: scope,
+              ),
+            ],
             if (cancelEnabled) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(
@@ -331,6 +350,108 @@ class _AppointmentCard extends ConsumerWidget {
       );
     }
   }
+}
+
+// ---------------------------------------------------------------------------
+// PIX action button — handles generate, view, and loading state
+// ---------------------------------------------------------------------------
+
+class _PaymentActionButton extends ConsumerWidget {
+  const _PaymentActionButton({
+    required this.appointmentId,
+    required this.paymentStatus,
+    required this.scope,
+    this.price,
+  });
+
+  final int appointmentId;
+  final PaymentStatus paymentStatus;
+  final AppointmentsScope scope;
+  final double? price;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final pixState = ref.watch(pixControllerProvider(appointmentId));
+    final isLoading = pixState.actionStatus == PixActionStatus.loading;
+
+    if (paymentStatus == PaymentStatus.paid) return const SizedBox.shrink();
+
+    final isPending = paymentStatus == PaymentStatus.pending;
+    final label = isPending ? 'Ver PIX' : 'Gerar PIX';
+    final icon = isPending ? Icons.qr_code_rounded : Icons.pix_rounded;
+
+    return SizedBox(
+      width: double.infinity,
+      child: FilledButton.icon(
+        onPressed: isLoading ? null : () => _onTap(context, ref, isPending),
+        icon: isLoading
+            ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+              )
+            : Icon(icon, size: 18),
+        label: Text(label),
+        style: FilledButton.styleFrom(
+          minimumSize: const Size(0, 40),
+          textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _onTap(BuildContext context, WidgetRef ref, bool isPending) async {
+    final ctrl = ref.read(pixControllerProvider(appointmentId).notifier);
+
+    if (isPending) {
+      final pix = await ctrl.fetchLatestPix();
+      if (!context.mounted) return;
+      if (pix == null) {
+        final err = ref.read(pixControllerProvider(appointmentId)).errorMessage;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(err ?? 'Não foi possível carregar o PIX.')),
+        );
+        return;
+      }
+      await _openSheet(context, pix);
+      if (!context.mounted) return;
+      ref.invalidate(appointmentsControllerProvider(scope));
+    } else {
+      final pix = await ctrl.generatePix();
+      if (!context.mounted) return;
+
+      if (pix == null) {
+        final err = ref.read(pixControllerProvider(appointmentId)).errorMessage ?? '';
+        // 409 = agendamento já pago — atualiza lista para refletir status.
+        ref.invalidate(appointmentsControllerProvider(scope));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(err.isNotEmpty ? err : 'Não foi possível gerar o PIX.')),
+        );
+        return;
+      }
+
+      await _openSheet(context, pix);
+      if (!context.mounted) return;
+      // Refresh list so payment_status badge is up to date after the modal closes.
+      ref.invalidate(appointmentsControllerProvider(scope));
+    }
+  }
+
+  Future<void> _openSheet(BuildContext context, PixPayment pix) async {
+    await showPixPaymentBottomSheet(
+      context,
+      appointmentId: appointmentId,
+      initialPix: pix,
+    );
+    // Check if payment was confirmed while sheet was open.
+    if (!context.mounted) return;
+    final pixState = ProviderScope.containerOf(context)
+        .read(pixControllerProvider(appointmentId));
+    if (pixState.pix?.paymentStatus == PaymentStatus.paid) {
+      await showPaymentSuccessDialog(context);
+    }
+  }
+
 }
 
 class _MetaRow extends StatelessWidget {

@@ -1,5 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import 'pix_payment.dart';
+
 part 'appointment.freezed.dart';
 part 'appointment.g.dart';
 
@@ -20,6 +22,8 @@ class Appointment with _$Appointment {
     String? status,
     String? serviceName,
     String? employeeName,
+    @Default('unpaid') String paymentStatus,
+    double? price,
   }) = _Appointment;
 
   factory Appointment.fromJson(Map<String, dynamic> json) =>
@@ -57,12 +61,27 @@ class Appointment with _$Appointment {
     );
     map['status'] = status;
 
+    // Payment status — default 'unpaid'.
+    final rawPaymentStatus = _firstPresent(map, const [
+      'payment_status',
+      'paymentStatus',
+    ]);
+    map['paymentStatus'] = rawPaymentStatus?.toString() ?? 'unpaid';
+
+    // Price / amount.
+    final rawPrice = _firstPresent(map, const ['price', 'amount', 'total']);
+    if (rawPrice != null) {
+      map['price'] = rawPrice is num ? rawPrice.toDouble() : double.tryParse(rawPrice.toString());
+    }
+
     return Appointment.fromJson(map);
   }
 }
 
 extension AppointmentX on Appointment {
   AppointmentStatus get statusEnum => _statusEnumFrom(status);
+
+  PaymentStatus get paymentStatusEnum => paymentStatus.toPaymentStatus();
 
   bool get isUpcoming {
     final s = statusEnum;

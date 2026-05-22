@@ -27,6 +27,8 @@ mixin _$Appointment {
   String? get status => throw _privateConstructorUsedError;
   String? get serviceName => throw _privateConstructorUsedError;
   String? get employeeName => throw _privateConstructorUsedError;
+  String get paymentStatus => throw _privateConstructorUsedError;
+  double? get price => throw _privateConstructorUsedError;
 
   /// Serializes this Appointment to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -52,6 +54,8 @@ abstract class $AppointmentCopyWith<$Res> {
     String? status,
     String? serviceName,
     String? employeeName,
+    String paymentStatus,
+    double? price,
   });
 }
 
@@ -76,6 +80,8 @@ class _$AppointmentCopyWithImpl<$Res, $Val extends Appointment>
     Object? status = freezed,
     Object? serviceName = freezed,
     Object? employeeName = freezed,
+    Object? paymentStatus = null,
+    Object? price = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -109,6 +115,16 @@ class _$AppointmentCopyWithImpl<$Res, $Val extends Appointment>
                     ? _value.employeeName
                     : employeeName // ignore: cast_nullable_to_non_nullable
                         as String?,
+            paymentStatus:
+                null == paymentStatus
+                    ? _value.paymentStatus
+                    : paymentStatus // ignore: cast_nullable_to_non_nullable
+                        as String,
+            price:
+                freezed == price
+                    ? _value.price
+                    : price // ignore: cast_nullable_to_non_nullable
+                        as double?,
           )
           as $Val,
     );
@@ -131,6 +147,8 @@ abstract class _$$AppointmentImplCopyWith<$Res>
     String? status,
     String? serviceName,
     String? employeeName,
+    String paymentStatus,
+    double? price,
   });
 }
 
@@ -154,6 +172,8 @@ class __$$AppointmentImplCopyWithImpl<$Res>
     Object? status = freezed,
     Object? serviceName = freezed,
     Object? employeeName = freezed,
+    Object? paymentStatus = null,
+    Object? price = freezed,
   }) {
     return _then(
       _$AppointmentImpl(
@@ -187,6 +207,16 @@ class __$$AppointmentImplCopyWithImpl<$Res>
                 ? _value.employeeName
                 : employeeName // ignore: cast_nullable_to_non_nullable
                     as String?,
+        paymentStatus:
+            null == paymentStatus
+                ? _value.paymentStatus
+                : paymentStatus // ignore: cast_nullable_to_non_nullable
+                    as String,
+        price:
+            freezed == price
+                ? _value.price
+                : price // ignore: cast_nullable_to_non_nullable
+                    as double?,
       ),
     );
   }
@@ -202,6 +232,8 @@ class _$AppointmentImpl implements _Appointment {
     this.status,
     this.serviceName,
     this.employeeName,
+    this.paymentStatus = 'unpaid',
+    this.price,
   });
 
   factory _$AppointmentImpl.fromJson(Map<String, dynamic> json) =>
@@ -219,10 +251,15 @@ class _$AppointmentImpl implements _Appointment {
   final String? serviceName;
   @override
   final String? employeeName;
+  @override
+  @JsonKey()
+  final String paymentStatus;
+  @override
+  final double? price;
 
   @override
   String toString() {
-    return 'Appointment(id: $id, appointmentDate: $appointmentDate, appointmentTime: $appointmentTime, status: $status, serviceName: $serviceName, employeeName: $employeeName)';
+    return 'Appointment(id: $id, appointmentDate: $appointmentDate, appointmentTime: $appointmentTime, status: $status, serviceName: $serviceName, employeeName: $employeeName, paymentStatus: $paymentStatus, price: $price)';
   }
 
   @override
@@ -239,7 +276,10 @@ class _$AppointmentImpl implements _Appointment {
             (identical(other.serviceName, serviceName) ||
                 other.serviceName == serviceName) &&
             (identical(other.employeeName, employeeName) ||
-                other.employeeName == employeeName));
+                other.employeeName == employeeName) &&
+            (identical(other.paymentStatus, paymentStatus) ||
+                other.paymentStatus == paymentStatus) &&
+            (identical(other.price, price) || other.price == price));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -252,6 +292,8 @@ class _$AppointmentImpl implements _Appointment {
     status,
     serviceName,
     employeeName,
+    paymentStatus,
+    price,
   );
 
   /// Create a copy of Appointment
@@ -276,6 +318,8 @@ abstract class _Appointment implements Appointment {
     final String? status,
     final String? serviceName,
     final String? employeeName,
+    final String paymentStatus,
+    final double? price,
   }) = _$AppointmentImpl;
 
   factory _Appointment.fromJson(Map<String, dynamic> json) =
@@ -293,6 +337,10 @@ abstract class _Appointment implements Appointment {
   String? get serviceName;
   @override
   String? get employeeName;
+  @override
+  String get paymentStatus;
+  @override
+  double? get price;
 
   /// Create a copy of Appointment
   /// with the given fields replaced by the non-null parameter values.

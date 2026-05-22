@@ -14,6 +14,8 @@ _$AppointmentImpl _$$AppointmentImplFromJson(Map<String, dynamic> json) =>
       status: json['status'] as String?,
       serviceName: json['serviceName'] as String?,
       employeeName: json['employeeName'] as String?,
+      paymentStatus: json['paymentStatus'] as String? ?? 'unpaid',
+      price: (json['price'] as num?)?.toDouble(),
     );
 
 Map<String, dynamic> _$$AppointmentImplToJson(_$AppointmentImpl instance) =>
@@ -24,4 +26,6 @@ Map<String, dynamic> _$$AppointmentImplToJson(_$AppointmentImpl instance) =>
       'status': instance.status,
       'serviceName': instance.serviceName,
       'employeeName': instance.employeeName,
+      'paymentStatus': instance.paymentStatus,
+      'price': instance.price,
     };

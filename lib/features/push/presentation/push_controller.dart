@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -10,6 +11,8 @@ import '../../../core/network/dio_client_provider.dart';
 import '../../../core/push/firebase_initializer.dart';
 import '../../../core/routing/root_navigator_key.dart';
 import '../../../core/session/session_controller.dart';
+import '../../appointments/presentation/appointments_controller.dart';
+import '../../appointments/presentation/pix_payment_controller.dart';
 import '../../dashboard/presentation/dashboard_controller.dart';
 import '../../notifications/presentation/notifications_controller.dart';
 import '../data/push_api.dart';
@@ -135,9 +138,9 @@ class PushController extends Notifier<PushState> {
     }
 
     _onMessageSub ??= FirebaseMessaging.onMessage.listen((message) {
-      // Apenas atualiza dados locais/badge; não navega em foreground.
       ref.invalidate(notificationsControllerProvider);
       ref.invalidate(dashboardControllerProvider);
+      _handlePaymentConfirmed(message);
     });
 
     _onMessageOpenedSub ??=
@@ -156,19 +159,56 @@ class PushController extends Notifier<PushState> {
     }
   }
 
+  void _handlePaymentConfirmed(RemoteMessage message) {
+    final data = message.data;
+    if (data['type'] != 'payment_confirmed') return;
+
+    final appointmentIdRaw = data['appointment_id'];
+    final appointmentId = appointmentIdRaw is int
+        ? appointmentIdRaw
+        : int.tryParse(appointmentIdRaw?.toString() ?? '');
+
+    // Refresh the appointments list so the badge updates.
+    ref.invalidate(appointmentsControllerProvider(AppointmentsScope.upcoming));
+
+    if (appointmentId == null) return;
+
+    // If the pix controller for this appointment exists and is being polled
+    // (i.e. the modal is open), mark it paid — the controller's onPaid callback
+    // will close the modal and show the success dialog.
+    try {
+      final pixCtrl = ref.read(pixControllerProvider(appointmentId).notifier);
+      pixCtrl.markPaid();
+    } catch (_) {
+      // Controller may not be alive if the modal is closed; show a snackbar instead.
+      final ctx = rootNavigatorKey.currentContext;
+      if (ctx == null) return;
+      ScaffoldMessenger.of(ctx).showSnackBar(
+        SnackBar(
+          content: Text('Pagamento do agendamento #$appointmentId confirmado!'),
+        ),
+      );
+    }
+  }
+
   void _handleNotificationOpen(RemoteMessage message) {
     final session = ref.read(sessionControllerProvider).value;
     if (session == null || !session.isAuthenticated) return;
 
-    // Atualiza badge e lista quando o usuário abre a partir do push.
     ref.invalidate(notificationsControllerProvider);
     ref.invalidate(dashboardControllerProvider);
+
+    final isPaymentConfirmed = message.data['type'] == 'payment_confirmed';
+    if (isPaymentConfirmed) {
+      ref.invalidate(appointmentsControllerProvider(AppointmentsScope.upcoming));
+    }
 
     final ctx = rootNavigatorKey.currentContext;
     if (ctx == null) return;
 
     try {
-      GoRouter.of(ctx).go('/notifications');
+      // Payment notifications open the appointments tab; others go to notifications.
+      GoRouter.of(ctx).go(isPaymentConfirmed ? '/appointments' : '/notifications');
     } catch (_) {
       // Ignora; navegação é best-effort.
     }
