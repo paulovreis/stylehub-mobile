@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/config/storage_keys.dart';
 import '../../../core/network/dio_client_provider.dart';
 import '../../../core/push/firebase_initializer.dart';
+import '../../../core/push/local_notifications_service.dart';
 import '../../../core/routing/root_navigator_key.dart';
 import '../../../core/session/session_controller.dart';
 import '../../appointments/presentation/appointments_controller.dart';
@@ -131,6 +132,8 @@ class PushController extends Notifier<PushState> {
     if (_handlersReady) return;
     _handlersReady = true;
 
+    await initLocalNotifications();
+
     try {
       FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
     } catch (_) {
@@ -141,6 +144,12 @@ class PushController extends Notifier<PushState> {
       ref.invalidate(notificationsControllerProvider);
       ref.invalidate(dashboardControllerProvider);
       _handlePaymentConfirmed(message);
+
+      final title = message.notification?.title ?? message.data['title'] as String? ?? 'StyleHub';
+      final body = message.notification?.body ?? message.data['body'] as String? ?? '';
+      if (body.isNotEmpty) {
+        showLocalNotification(title: title, body: body);
+      }
     });
 
     _onMessageOpenedSub ??=
